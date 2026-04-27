@@ -1,3 +1,5 @@
+# 使用 gh-pages 分支发布，避免 deploy-pages 在未完成「Pages 首次配置」时出现 404。
+# 仓库 Settings → Pages → Build and deployment → Source 选择「Deploy from a branch」→ branch: gh-pages / folder: / (root)
 name: Deploy to GitHub Pages
 
 on:
@@ -6,16 +8,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,18 +35,9 @@ jobs:
         env:
           CI: true
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          force_orphan: true

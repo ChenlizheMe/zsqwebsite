@@ -3,13 +3,14 @@ import { motion } from "framer-motion";
 import { projects } from "./data/projects";
 import { siteConfig } from "./siteConfig";
 import { VectorField } from "./components/VectorField";
+import { BilibiliSection } from "./components/BilibiliSection";
 import { Reveal, stagger, item } from "./components/Reveal";
 
 const focusAreas = [
-  "VR 叙事与沉浸",
-  "Unity 游戏与关卡",
-  "互动装置 · Arduino",
-  "科技与人文主题",
+  "系统与关卡策划",
+  "叙事与世界观",
+  "玩法原型与文档",
+  "VR / 互动体验设计",
 ];
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -41,6 +42,7 @@ function Nav() {
       <nav className="nav__links" aria-label="页面内导航">
         {[
           ["关于", "about"],
+          ["视频", "video"],
           ["项目", "work"],
           ["联系", "contact"],
         ].map(([label, id]) => (
@@ -82,7 +84,7 @@ function Hero() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.35 }}
       >
-        互动媒体 · 游戏与虚拟现实
+        {siteConfig.roleLine}
       </motion.p>
       <motion.div
         className="hero__rule"
@@ -98,10 +100,11 @@ function Hero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, ease, delay: 0.5 }}
       >
-        你好，欢迎来这里。本科就读于{siteConfig.education.undergraduate}
-        ，目前在{siteConfig.education.graduate}
-        继续攻读研究生。创作涵盖虚拟现实叙事、Unity
-        游戏、科技互动装置与赛题 / Game Jam，关注科幻意象、伦理叙事与多感官体验。
+        你好。目标岗位为游戏策划。本科毕业于{siteConfig.education.undergraduate}
+        ，现于{siteConfig.education.graduate}
+        就读。习惯把主题落进可玩的系统与关卡：从 VR
+        叙事、完整赛题案到展陈与 Game Jam
+        原型，关注节奏、动机与情绪曲线，并保留清晰的文档与迭代说明以便协作。
       </motion.p>
       <motion.div
         className="hero__chips"
@@ -121,8 +124,8 @@ function Hero() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.85 }}
       >
-        <button type="button" className="btn btn--primary" onClick={() => document.getElementById("work")?.scrollIntoView({ behavior: "smooth" })}>
-          浏览作品
+        <button type="button" className="btn btn--primary" onClick={() => document.getElementById("video")?.scrollIntoView({ behavior: "smooth" })}>
+          看视频作品
         </button>
       </motion.div>
     </section>
@@ -160,23 +163,25 @@ function About() {
       <div className="about__grid">
         <Reveal delay={0.05}>
           <div className="panel">
-            <h3 className="panel__h">创作线索</h3>
+            <h3 className="panel__h">策划侧重</h3>
             <p className="panel__p">
-              从《球状闪电》式科幻到「灵智」与人工智能伦理，从公共空间的机械花装置到宇宙尺度的
-              VR
-              哲思——在引擎、硬件与完整策划案之间来回切换，让交互成为叙事的语法。
+              从科幻改编、AI
+              伦理到宇宙哲思，习惯先定「玩家动机与情绪曲线」，再落到关卡与系统：谜题如何服务主题、节奏何时给信息、结局如何收束命题。商业赛题与毕业设计侧重可讲清楚的系统案与迭代记录。
             </p>
           </div>
         </Reveal>
         <Reveal delay={0.12}>
           <div className="panel">
-            <h3 className="panel__h">常用能力</h3>
+            <h3 className="panel__h">能力与工具</h3>
             <ul className="panel__list">
-              {["Unity / VR / XR", "C# 与游戏逻辑", "Arduino & 互动硬件", "Python & OpenCV", "关卡与叙事设计"].map(
-                (x) => (
-                  <li key={x}>{x}</li>
-                )
-              )}
+              {[
+                "系统与关卡：循环、难度曲线、任务与事件",
+                "叙事与文档：世界观、One Pager、迭代里程碑",
+                "Unity / VR 原型：能跟程序对齐需求与验收",
+                "展陈与互动：观展动线与体验目标（非硬件清单）",
+              ].map((x) => (
+                <li key={x}>{x}</li>
+              ))}
             </ul>
           </div>
         </Reveal>
@@ -250,10 +255,10 @@ function Work() {
     <section className="section section--work" id="work">
       <Reveal>
         <h2 className="section__h">
-          <span className="section__num">01</span>
+          <span className="section__num">02</span>
           作品与项目
         </h2>
-        <p className="section__lead">编号仅作版式索引，同系列作品在 PDF 作品集中有完整说明。</p>
+        <p className="section__lead">以下为策划向摘要，详案与视频演示见各条链接及上方内嵌稿件。</p>
       </Reveal>
       <div className="work-list">
         {projects.map((p, i) => (
@@ -269,11 +274,11 @@ function Contact() {
     <section className="section section--contact" id="contact">
       <Reveal>
         <h2 className="section__h">
-          <span className="section__num">02</span>
+          <span className="section__num">03</span>
           联系
         </h2>
         <div className="contact">
-          <p className="contact__text">合作、参展或学术交流，可来信说明来意与时间段。</p>
+          <p className="contact__text">游戏策划岗位、合作或试玩邀约，欢迎邮件附岗位与时间段，可随信附作品链接。</p>
           <a className="contact__mail" href={`mailto:${siteConfig.email}`}>
             {siteConfig.email}
           </a>
@@ -303,6 +308,7 @@ export default function App() {
         <main>
           <Hero />
           <About />
+          <BilibiliSection />
           <Work />
           <Contact />
         </main>

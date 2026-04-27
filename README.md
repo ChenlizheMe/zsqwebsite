@@ -1,6 +1,8 @@
 # 庄舒晴 · 个人网站（React + Vite）
 
-项目与文案可在 `src/data/projects.ts` 中编辑；姓名、学校与邮箱在 `src/siteConfig.ts`。
+- 作品与策划文案：`src/data/projects.ts`
+- 姓名、学校、邮箱、英文眉题：`src/siteConfig.ts`
+- **bilibili 内嵌列表（BV 号）**：`src/data/bilibiliVideos.ts`（可与空间 [用户主页](https://space.bilibili.com/1996144345) 中的稿件同步增减）
 
 ## 本地运行
 
@@ -9,14 +11,25 @@ npm install
 npm run dev
 ```
 
-## 部署到 GitHub Pages
+## 部署到 GitHub Pages（gh-pages 分支）
 
-1. 新建仓库并推送代码。
-2. **Settings → Pages → Source** 选择 **GitHub Actions**。
-3. 若仓库名不是 `zsqwebsite`，请修改 `vite.config.ts` 中的 `repoBase`。
-4. 在 `src/siteConfig.ts` 中填写你的邮箱等联系方式。
-5. 推送至 `main` 或 `master` 触发构建。
+构建已通过 **推送到 `gh-pages` 分支** 发布，避免「GitHub Actions 一键部署」在未完成仓库 Pages 配置时出现 **deploy-pages 404**。
 
-访问地址示例：`https://<用户名>.github.io/<仓库名>/`
+1. 推送代码到 `main` / `master`，工作流会构建并把 `dist` 推到 **`gh-pages` 分支**。
+2. 打开仓库 **Settings → Pages**。
+3. **Build and deployment** 里 **Source** 选 **Deploy from a branch**。
+4. **Branch** 选 **`gh-pages`**，目录选 **`/ (root)`**，保存。
 
-本地开发使用根路径 `/`；CI 构建使用子路径，与 GitHub Project Pages 一致。
+几分钟后站点生效：`https://<用户名>.github.io/<仓库名>/`
+
+若仓库名不是 `zsqwebsite`，请修改 `vite.config.ts` 中的 `repoBase` 为 `/<你的仓库名>/`。
+
+### 若仍使用官方 `deploy-pages` / OIDC 方案
+
+需先在 **Settings → Pages** 将 Source 设为 **GitHub Actions** 并完成一次启用；否则会提示与日志中类似的 Not Found。当前仓库默认改为 **gh-pages 分支** 发布，一般无需再配置该项。
+
+## 内嵌说明
+
+页面使用 bilibili 官方播放器地址：  
+`https://player.bilibili.com/player.html?bvid=…`  
+若个别浏览器拦截 iframe，可引导访客点击「在 bilibili 打开」或前往个人空间。
