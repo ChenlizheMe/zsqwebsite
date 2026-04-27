@@ -1,59 +1,52 @@
 import { motion } from "framer-motion";
 
-/** 背景矢量装饰：几何网格与线构，偏平面构成感 */
+/** 背景：偏 Starfield UI 的钢架几何与仪表弧线，动效克制 */
 export function VectorField() {
   return (
     <div className="vector-field" aria-hidden>
-      <svg
-        className="vector-field__svg"
-        viewBox="0 0 1200 800"
-        preserveAspectRatio="xMidYMid slice"
-      >
+      <svg className="vector-field__svg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
         <defs>
-          <pattern
-            id="grid"
-            width="48"
-            height="48"
-            patternUnits="userSpaceOnUse"
-          >
+          <pattern id="hex" width="56" height="49" patternUnits="userSpaceOnUse" patternTransform="scale(1)">
             <path
-              d="M 48 0 L 0 0 0 48"
+              d="M28 2 L52 15 L52 34 L28 47 L4 34 L4 15 Z"
               fill="none"
               stroke="currentColor"
-              strokeWidth="0.4"
-              opacity="0.4"
+              strokeWidth="0.5"
+              opacity="0.55"
             />
           </pattern>
+          <radialGradient id="vf-glow" cx="50%" cy="20%" r="60%">
+            <stop offset="0%" stopColor="currentColor" stopOpacity="0.14" />
+            <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
+          </radialGradient>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid)" />
-        <circle cx="900" cy="180" r="118" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-        <motion.g
-          style={{ transformOrigin: "900px 180px" }}
-          animate={{ rotate: [0, 360] }}
-          transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
-        >
-          <circle cx="900" cy="62" r="4" fill="currentColor" opacity="0.5" />
+        <rect width="100%" height="100%" fill="url(#hex)" opacity="0.55" />
+        <rect width="100%" height="100%" fill="url(#vf-glow)" />
+        <g opacity="0.55">
+          <path d="M0 420 L1200 280" fill="none" stroke="currentColor" strokeWidth="0.6" />
+          <path d="M120 0 L120 800" fill="none" stroke="currentColor" strokeWidth="0.35" opacity="0.5" />
+          <path d="M1040 0 L1040 800" fill="none" stroke="currentColor" strokeWidth="0.35" opacity="0.5" />
+        </g>
+        <motion.g style={{ transformOrigin: "600px 380px" }} animate={{ opacity: [0.35, 0.6, 0.35] }} transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}>
+          <path
+            d="M 600 380 m -200 0 a 200 200 0 1 0 400 0 a 200 200 0 1 0 -400 0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="0.7"
+            strokeDasharray="32 20"
+            opacity="0.55"
+          />
+          <path d="M 400 380 L 800 380" fill="none" stroke="currentColor" strokeWidth="0.4" opacity="0.4" />
         </motion.g>
-        <line x1="0" y1="520" x2="1200" y2="320" stroke="currentColor" strokeWidth="0.6" opacity="0.22" />
         <motion.path
-          d="M 80 700 Q 400 400 700 650 T 1120 480"
+          d="M 40 120 L 180 100 L 220 200 L 80 220 Z M 900 60 L 1040 80 L 1020 200 L 880 180 Z"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.2"
-          initial={{ pathLength: 0, opacity: 0 }}
-          animate={{ pathLength: 1, opacity: 0.4 }}
-          transition={{ duration: 2.2, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
-        />
-        <motion.path
-          d="M 1050 120 L 1180 40 M 1120 200 L 1180 120 L 1120 40"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1"
-          strokeLinecap="square"
+          strokeWidth="0.6"
           initial={{ pathLength: 0 }}
           animate={{ pathLength: 1 }}
-          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1], delay: 0.4 }}
-          opacity="0.35"
+          transition={{ duration: 2.4, ease: [0.22, 1, 0.36, 1] }}
+          opacity="0.45"
         />
       </svg>
     </div>

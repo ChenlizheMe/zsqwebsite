@@ -26,12 +26,14 @@ type Props = {
   bvid: string;
   title: string;
   startSec?: number;
+  label?: string;
+  openLabel?: string;
 };
 
-export function BilibiliEmbed({ bvid, title, startSec }: Props) {
+export function BilibiliEmbed({ bvid, title, startSec, label = "演示视频", openLabel = "在 bilibili 打开 ↗" }: Props) {
   return (
     <div className="work-item__video">
-      <p className="work-item__video-label">演示视频</p>
+      <p className="work-item__video-label">{label}</p>
       <div className="work-item__video-frame">
         <iframe
           title={title}
@@ -49,7 +51,7 @@ export function BilibiliEmbed({ bvid, title, startSec }: Props) {
         target="_blank"
         rel="noreferrer noopener"
       >
-        在 bilibili 打开 ↗
+        {openLabel}
       </a>
     </div>
   );

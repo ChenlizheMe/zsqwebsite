@@ -4,19 +4,132 @@ import { projects } from "./data/projects";
 import { siteConfig } from "./siteConfig";
 import { VectorField } from "./components/VectorField";
 import { BilibiliEmbed } from "./components/BilibiliEmbed";
-import { Reveal, stagger, item } from "./components/Reveal";
+import { Reveal, item, stagger } from "./components/Reveal";
+import profilePhoto from "../assets/photo.png";
 
-const focusAreas = [
-  "系统与关卡策划",
-  "叙事与世界观",
-  "玩法原型与文档",
-  "VR / 互动体验设计",
-];
+type Lang = "zh" | "en";
+type Theme = "day" | "night";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-function Nav() {
+const copy = {
+  zh: {
+    nav: { about: "关于", systems: "技能", work: "作品", contact: "联系" },
+    eyebrow: "游戏策划 · 个人网站",
+    role: siteConfig.roleLine,
+    target: siteConfig.target,
+    heroTitle: "用关卡和系统，把想表达的东西做成玩家愿意玩下去的样子。",
+    heroBody:
+      "我是庄舒晴，正在找游戏策划相关的机会。本科在华南理工大学，研究生在清华大学深圳国际研究生院。做过 VR 叙事、2D 冒险、互动装置、赛题案和 Game Jam——平时琢磨最多的是：玩家这一步为什么要继续玩下去。",
+    ctaWork: "看作品",
+    ctaVideo: "部分条目含 B 站演示",
+    heroCardCaption: "游戏策划",
+    aboutTitle: "关于我",
+    aboutNote: "教育背景与近期方向",
+    education: "教育背景",
+    focusTitle: "最近在做什么",
+    focusBody:
+      "写策划案、拆关卡节奏、和程序美术对齐需求，也会用 Unity / VR 做小验证。兴趣偏叙事和系统叠在一起的项目，商业赛题和校园项目都做过一些。",
+    systemsTitle: "技能与工具",
+    systemsNote: "不堆概念，只列实际协作里常用的",
+    workTitle: "作品",
+    workNote: "每个项目一段说明，含个人参与点；有演示视频就放在同一条目里。",
+    workLead: "下面按时间线大致倒序，点开即可看文字与视频（如有）。",
+    contactTitle: "联系",
+    contactNote: "邮件或 B 站私信都可以",
+    contactText: "招聘、实习、合作或单纯想聊聊项目，都欢迎发邮件，说明来意即可。",
+    videoLabel: "演示视频",
+    openVideo: "在 bilibili 打开 ↗",
+    visitBili: "B 站主页 ↗",
+    themeDay: "日间",
+    themeNight: "夜间",
+    langSwitch: "EN",
+    contribution: "我做了什么",
+    outcomes: "结果或数据",
+    concept: "想表达什么",
+    location: "广州 / 深圳",
+    available: "接受策划岗位沟通",
+    undergradLabel: "本科",
+    gradLabel: "研究生",
+  },
+  en: {
+    nav: { about: "About", systems: "Skills", work: "Work", contact: "Contact" },
+    eyebrow: "Game design portfolio",
+    role: siteConfig.roleLineEn,
+    target: siteConfig.targetEn,
+    heroTitle: "Design levels and systems so the idea stays fun to play, not just fun to describe.",
+    heroBody:
+      "I’m Shuqing Zhuang, looking for game design opportunities. I studied at South China University of Technology and I’m a graduate student at Tsinghua SIGS. I’ve worked on VR narrative, 2D adventure, an interactive piece, competition pitches, and game jams. Most of my energy goes into one question: why would a player take the next step.",
+    ctaWork: "See projects",
+    ctaVideo: "Some entries include a demo",
+    heroCardCaption: "Game design",
+    aboutTitle: "About",
+    aboutNote: "Background and what I care about",
+    education: "Education",
+    focusTitle: "What I’m up to",
+    focusBody:
+      "Design docs, pacing, alignment with art and code, and small Unity or VR tests when I need to check feel. I like projects where story and systems reinforce each other.",
+    systemsTitle: "Skills and tools",
+    systemsNote: "Practical, day-to-day collaboration",
+    workTitle: "Work",
+    workNote: "Narrative for each project and my part in it, plus video when available.",
+    workLead: "Roughly most recent first. Each card is self contained.",
+    contactTitle: "Contact",
+    contactNote: "Email or Bilibili",
+    contactText: "Hiring, internships, collaboration, or a quick chat about a project are all welcome. A short note about context helps.",
+    videoLabel: "Video",
+    openVideo: "Open on bilibili ↗",
+    visitBili: "Bilibili profile ↗",
+    themeDay: "Light",
+    themeNight: "Dark",
+    langSwitch: "中文",
+    contribution: "What I did",
+    outcomes: "Outcomes",
+    concept: "What it’s about",
+    location: "Guangzhou / Shenzhen",
+    available: "Open to design roles",
+    undergradLabel: "Undergraduate",
+    gradLabel: "Graduate",
+  },
+} as const;
+
+const focusAreas = {
+  zh: ["关卡与系统", "叙事与体验", "Unity / VR 原型", "策划文档与沟通"],
+  en: ["Level & systems", "Narrative & feel", "Unity / VR prototypes", "Docs & collaboration"],
+} as const;
+
+const systems = {
+  zh: [
+    { id: "s1", title: "把想法拆成可玩结构", text: "从主题到目标、压力、节奏，尽量一句话能说清“玩家在这一段要干嘛”。" },
+    { id: "s2", title: "信息怎么给", text: "线索、剧情、教学关什么时候出现，试着避免一次性倒设定。" },
+    { id: "s3", title: "和组里对齐", text: "用流程图、界面草图、里程碑把需求说具体，减少口头往返。" },
+    { id: "s4", title: "用原型试一遍", text: "复杂手感或节奏问题，会倾向先做小场景或 Game Jam 式验证。" },
+  ],
+  en: [
+    { id: "s1", title: "Structure the idea", text: "From theme to goals, pressure, and pacing, keep the player beat readable." },
+    { id: "s2", title: "Pacing what players learn", text: "Clues, story beats, and tutorials staged so it does not feel like a lore dump." },
+    { id: "s3", title: "Alignment", text: "Flowcharts, rough UI, and milestones so requests stay concrete for art and code." },
+    { id: "s4", title: "Prototypes", text: "For tricky feel or cadence, small scenes or a jam build first." },
+  ],
+} as const;
+
+function useStoredState<T extends string>(key: string, initial: T) {
+  const [value, setValue] = useState<T>(() => {
+    if (typeof window === "undefined") return initial;
+    return (window.localStorage.getItem(key) as T | null) ?? initial;
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem(key, value);
+  }, [key, value]);
+
+  return [value, setValue] as const;
+}
+
+function Nav({ lang, theme, onLang, onTheme }: { lang: Lang; theme: Theme; onLang: () => void; onTheme: () => void }) {
   const [scrolled, setScrolled] = useState(false);
+  const t = copy[lang];
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
@@ -29,159 +142,130 @@ function Nav() {
   };
 
   return (
-    <motion.header
-      className={`nav ${scrolled ? "nav--scrolled" : ""}`}
-      initial={{ y: -16, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease }}
-    >
+    <motion.header className={`nav ${scrolled ? "nav--scrolled" : ""}`} initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6, ease }}>
       <button type="button" className="nav__brand" onClick={() => go("top")}>
         <span className="nav__name">{siteConfig.nameZh}</span>
         <span className="nav__name-en">{siteConfig.nameEn}</span>
       </button>
-      <nav className="nav__links" aria-label="页面内导航">
+      <nav className={`nav__links ${lang === "en" ? "nav__links--caps" : ""}`} aria-label="section navigation">
         {[
-          ["关于", "about"],
-          ["项目", "work"],
-          ["联系", "contact"],
+          [t.nav.about, "about"],
+          [t.nav.systems, "systems"],
+          [t.nav.work, "work"],
+          [t.nav.contact, "contact"],
         ].map(([label, id]) => (
           <button key={id} type="button" className="nav__link" onClick={() => go(id)}>
             {label}
           </button>
         ))}
       </nav>
+      <div className="nav__controls" aria-label="display controls">
+        <button type="button" className="nav__toggle" onClick={onTheme}>
+          {theme === "day" ? t.themeNight : t.themeDay}
+        </button>
+        <button type="button" className="nav__toggle" onClick={onLang}>
+          {t.langSwitch}
+        </button>
+      </div>
     </motion.header>
   );
 }
 
-function Hero() {
+function Hero({ lang }: { lang: Lang }) {
+  const t = copy[lang];
+
   return (
     <section className="hero" id="top">
-      <motion.p
-        className="hero__eyebrow"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease, delay: 0.1 }}
-      >
-        {siteConfig.eyebrow}
-      </motion.p>
-      <motion.h1
-        className="hero__title"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.7, ease, delay: 0.15 }}
-      >
-        <span className="hero__title-zh">{siteConfig.nameZh}</span>
-        <span className="hero__dot" aria-hidden>
-          ·
-        </span>
-        <span className="hero__title-en">{siteConfig.nameEn}</span>
-      </motion.h1>
-      <motion.p
-        className="hero__role"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.35 }}
-      >
-        {siteConfig.roleLine}
-      </motion.p>
-      <motion.div
-        className="hero__rule"
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.9, ease, delay: 0.45 }}
-        style={{ transformOrigin: "left center" }}
-        role="presentation"
-      />
-      <motion.p
-        className="hero__bio"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.65, ease, delay: 0.5 }}
-      >
-        你好。目标岗位为游戏策划。本科毕业于{siteConfig.education.undergraduate}
-        ，现于{siteConfig.education.graduate}
-        就读。习惯把主题落进可玩的系统与关卡：从 VR
-        叙事、完整赛题案到展陈与 Game Jam
-        原型，关注节奏、动机与情绪曲线，并保留清晰的文档与迭代说明以便协作。
-      </motion.p>
-      <motion.div
-        className="hero__chips"
-        variants={stagger}
-        initial="hidden"
-        animate="show"
-      >
-        {focusAreas.map((t) => (
-          <motion.span key={t} className="chip" variants={item}>
-            {t}
-          </motion.span>
-        ))}
-      </motion.div>
-      <motion.div
-        className="hero__cta"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.85 }}
-      >
-        <button type="button" className="btn btn--primary" onClick={() => document.getElementById("work")?.scrollIntoView({ behavior: "smooth" })}>
-          浏览项目
-        </button>
-      </motion.div>
+      <div className="hero__copy">
+        <motion.p className="hero__eyebrow" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease, delay: 0.1 }}>
+          {t.eyebrow}
+        </motion.p>
+        <motion.h1 className="hero__title" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease, delay: 0.15 }}>
+          {t.heroTitle}
+        </motion.h1>
+        <motion.p className="hero__role" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.35 }}>
+          {t.role}
+        </motion.p>
+        <motion.div className="hero__rule" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.9, ease, delay: 0.45 }} style={{ transformOrigin: "left center" }} role="presentation" />
+        <motion.p className="hero__bio" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, ease, delay: 0.5 }}>
+          {t.heroBody}
+        </motion.p>
+        <motion.div className="hero__chips" variants={stagger} initial="hidden" animate="show">
+          {focusAreas[lang].map((label) => (
+            <motion.span key={label} className="chip" variants={item}>
+              {label}
+            </motion.span>
+          ))}
+        </motion.div>
+        <motion.div className="hero__cta" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.85 }}>
+          <button type="button" className="btn btn--primary" onClick={() => document.getElementById("work")?.scrollIntoView({ behavior: "smooth" })}>
+            {t.ctaWork}
+          </button>
+          <span className="hero__hint">{t.ctaVideo}</span>
+        </motion.div>
+      </div>
+        <motion.aside className="hero-card sf-panel" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, ease, delay: 0.2 }}>
+        <div className="hero-card__geo" aria-hidden />
+        <img className="hero-card__photo" src={profilePhoto} alt={lang === "zh" ? "庄舒晴的照片" : "Portrait of Shuqing Zhuang"} />
+        <div className="hero-card__meta">
+          <p className="hero-card__label">{lang === "zh" ? "个人照片" : "Photo"}</p>
+          <h2>{siteConfig.nameZh}</h2>
+          <p className="hero-card__en">{siteConfig.nameEn}</p>
+          <p className="hero-card__line">{t.heroCardCaption}</p>
+          <p className="hero-card__sub">{t.location} · {t.available}</p>
+        </div>
+      </motion.aside>
     </section>
   );
 }
 
-function Education() {
+function SectionHeader({ title, note }: { title: string; note?: string }) {
   return (
     <Reveal>
-      <div className="edu">
-        <div className="edu__col">
-          <span className="edu__label">本科</span>
-          <p className="edu__school">{siteConfig.education.undergraduate}</p>
-        </div>
-        <div className="edu__line" aria-hidden />
-        <div className="edu__col">
-          <span className="edu__label">研究生</span>
-          <p className="edu__school">{siteConfig.education.graduate}</p>
-        </div>
+      <div className="section-head">
+        {note ? <p className="section-head__note">{note}</p> : null}
+        <h2>{title}</h2>
       </div>
     </Reveal>
   );
 }
 
-function About() {
+function About({ lang }: { lang: Lang }) {
+  const t = copy[lang];
+  const undergraduate = lang === "zh" ? siteConfig.education.undergraduate : siteConfig.education.undergraduateEn;
+  const graduate = lang === "zh" ? siteConfig.education.graduate : siteConfig.education.graduateEn;
+
   return (
-    <section className="section" id="about">
-      <Reveal>
-        <h2 className="section__h">
-          <span className="section__num">00</span>
-          关于
-        </h2>
-      </Reveal>
-      <Education />
-      <div className="about__grid">
-        <Reveal delay={0.05}>
-          <div className="panel">
-            <h3 className="panel__h">策划侧重</h3>
-            <p className="panel__p">
-              从科幻改编、AI
-              伦理到宇宙哲思，习惯先定「玩家动机与情绪曲线」，再落到关卡与系统：谜题如何服务主题、节奏何时给信息、结局如何收束命题。商业赛题与毕业设计侧重可讲清楚的系统案与迭代记录。
-            </p>
+    <section className="section dossier" id="about">
+      <SectionHeader title={t.aboutTitle} note={t.aboutNote} />
+      <div className="dossier__grid">
+        <Reveal>
+          <div className="dossier-card dossier-card--wide sf-panel">
+            <p className="dossier-card__label">{t.education}</p>
+            <div className="timeline">
+              <div>
+                <span>{t.undergradLabel}</span>
+                <strong>{undergraduate}</strong>
+              </div>
+              <div>
+                <span>{t.gradLabel}</span>
+                <strong>{graduate}</strong>
+              </div>
+            </div>
           </div>
         </Reveal>
-        <Reveal delay={0.12}>
-          <div className="panel">
-            <h3 className="panel__h">能力与工具</h3>
-            <ul className="panel__list">
-              {[
-                "系统与关卡：循环、难度曲线、任务与事件",
-                "叙事与文档：世界观、One Pager、迭代里程碑",
-                "Unity / VR 原型：能跟程序对齐需求与验收",
-                "展陈与互动：观展动线与体验目标（非硬件清单）",
-              ].map((x) => (
-                <li key={x}>{x}</li>
-              ))}
-            </ul>
+        <Reveal delay={0.08}>
+          <div className="dossier-card sf-panel">
+            <p className="dossier-card__label">{t.focusTitle}</p>
+            <p>{t.focusBody}</p>
+          </div>
+        </Reveal>
+        <Reveal delay={0.16}>
+          <div className="dossier-card dossier-card--status sf-panel">
+            <p className="dossier-card__label">{lang === "zh" ? "求职意向" : "Focus"}</p>
+            <strong>{t.target}</strong>
+            <span>{t.location}</span>
+            <span>{t.available}</span>
           </div>
         </Reveal>
       </div>
@@ -189,103 +273,117 @@ function About() {
   );
 }
 
-function ProjectBlock({
-  project,
-  index,
-}: {
-  project: (typeof projects)[0];
-  index: number;
-}) {
-  const num = String(index + 1).padStart(2, "0");
+function Systems({ lang }: { lang: Lang }) {
+  const t = copy[lang];
   return (
-    <motion.article
-      className="work-item"
-      id={project.id}
-      layout
-      initial={{ opacity: 0, y: 32 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-10% 0px" }}
-      transition={{ duration: 0.65, ease, delay: 0.05 }}
-    >
-      <div className="work-item__index">{num}</div>
-      <div className="work-item__body">
-        <p className="work-item__meta">
+    <section className="section systems" id="systems">
+      <SectionHeader title={t.systemsTitle} note={t.systemsNote} />
+      <div className="systems__grid">
+        {systems[lang].map((system, index) => (
+          <Reveal key={system.id} delay={index * 0.04}>
+            <article className="system-card sf-panel">
+              <h3>{system.title}</h3>
+              <p>{system.text}</p>
+            </article>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function ProjectBlock({ project, index, lang }: { project: (typeof projects)[0]; index: number; lang: Lang }) {
+  const t = copy[lang];
+  const num = String(index + 1).padStart(2, "0");
+  const view = lang === "zh" ? project : project.en;
+
+  return (
+    <motion.article className="mission sf-panel" id={project.id} layout initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-10% 0px" }} transition={{ duration: 0.65, ease, delay: 0.05 }}>
+      <div className="mission__index">#{num}</div>
+      <div className="mission__body">
+        <p className="mission__meta">
           <span>{project.period}</span>
-          <span className="work-item__sep" aria-hidden>
-            ·
-          </span>
-          <span>{project.role}</span>
+          <span className="mission__role">{view.role}</span>
         </p>
-        <h3 className="work-item__title">
-          {project.title}
-          {project.titleEn ? <span className="work-item__en"> / {project.titleEn}</span> : null}
+        <h3>
+          {view.title}
+          {view.titleEn ? <span> / {view.titleEn}</span> : null}
         </h3>
-        <p className="work-item__summary">{project.summary}</p>
-        {project.highlights ? (
-          <ul className="work-item__hl">
-            {project.highlights.map((h) => (
-              <li key={h}>{h}</li>
+        <p className="mission__summary">{view.summary}</p>
+        <div className="mission__panel">
+          <div>
+            <p className="mission__label">{t.concept}</p>
+            <p>{view.concept}</p>
+          </div>
+          <div>
+            <p className="mission__label">{t.contribution}</p>
+            <ul>
+              {view.contribution.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+          {view.outcomes ? (
+            <div>
+              <p className="mission__label">{t.outcomes}</p>
+              <ul>
+                {view.outcomes.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+        </div>
+        {view.highlights ? (
+          <ul className="mission__highlights">
+            {view.highlights.map((line) => (
+              <li key={line}>{line}</li>
             ))}
           </ul>
         ) : null}
-        <div className="work-item__tags">
-          {project.tags.map((t) => (
-            <span key={t} className="tag">
-              {t}
-            </span>
+        <div className="mission__tags">
+          {view.tags.map((tag) => (
+            <span key={tag}>{tag}</span>
           ))}
         </div>
         {project.bvid ? (
-          <BilibiliEmbed bvid={project.bvid} title={project.title} startSec={project.videoStartSec} />
-        ) : null}
-        {project.links ? (
-          <div className="work-item__links">
-            {project.links.map((l) => (
-              <a key={l.href} className="link-external" href={l.href} target="_blank" rel="noreferrer noopener">
-                {l.label} ↗
-              </a>
-            ))}
-          </div>
+          <BilibiliEmbed bvid={project.bvid} title={view.title} startSec={project.videoStartSec} label={t.videoLabel} openLabel={t.openVideo} />
         ) : null}
       </div>
     </motion.article>
   );
 }
 
-function Work() {
+function Work({ lang }: { lang: Lang }) {
+  const t = copy[lang];
   return (
-    <section className="section section--work" id="work">
+    <section className="section work" id="work">
+      <SectionHeader title={t.workTitle} note={t.workNote} />
       <Reveal>
-        <h2 className="section__h">
-          <span className="section__num">01</span>
-          作品与项目
-        </h2>
-        <p className="section__lead">
-          每条为独立项目；仅当该项目在 bilibili
-          有对应演示稿时，会在条目内内嵌视频，无单独视频区。
-        </p>
+        <p className="section__lead">{t.workLead}</p>
       </Reveal>
-      <div className="work-list">
-        {projects.map((p, i) => (
-          <ProjectBlock key={p.id} project={p} index={i} />
+      <div className="mission-list">
+        {projects.map((project, index) => (
+          <ProjectBlock key={project.id} project={project} index={index} lang={lang} />
         ))}
       </div>
     </section>
   );
 }
 
-function Contact() {
+function Contact({ lang }: { lang: Lang }) {
+  const t = copy[lang];
   return (
-    <section className="section section--contact" id="contact">
+    <section className="section contact-section" id="contact">
+      <SectionHeader title={t.contactTitle} note={t.contactNote} />
       <Reveal>
-        <h2 className="section__h">
-          <span className="section__num">02</span>
-          联系
-        </h2>
-        <div className="contact">
-          <p className="contact__text">游戏策划岗位、合作或试玩邀约，欢迎邮件附岗位与时间段，可随信附作品链接。</p>
-          <a className="contact__mail" href={`mailto:${siteConfig.email}`}>
+        <div className="contact-panel sf-panel">
+          <p>{t.contactText}</p>
+          <a className="contact-panel__mail" href={`mailto:${siteConfig.email}`}>
             {siteConfig.email}
+          </a>
+          <a className="contact-panel__link" href={siteConfig.bilibiliSpace} target="_blank" rel="noreferrer noopener">
+            {t.visitBili}
           </a>
         </div>
       </Reveal>
@@ -293,30 +391,39 @@ function Contact() {
   );
 }
 
-function Footer() {
+function Footer({ lang }: { lang: Lang }) {
   return (
     <footer className="footer">
       <p>
-        © {new Date().getFullYear()} {siteConfig.nameZh} · {siteConfig.nameEn}
+        © {new Date().getFullYear()} {lang === "zh" ? siteConfig.nameZh : siteConfig.nameEn}
       </p>
     </footer>
   );
 }
 
 export default function App() {
+  const [lang, setLang] = useStoredState<Lang>("zsq-lang", "zh");
+  const [theme, setTheme] = useStoredState<Theme>("zsq-theme", "night");
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+  }, [lang, theme]);
+
   return (
     <div className="page">
       <div className="page__bg" />
       <VectorField />
       <div className="page__content">
-        <Nav />
+        <Nav lang={lang} theme={theme} onLang={() => setLang(lang === "zh" ? "en" : "zh")} onTheme={() => setTheme(theme === "day" ? "night" : "day")} />
         <main>
-          <Hero />
-          <About />
-          <Work />
-          <Contact />
+          <Hero lang={lang} />
+          <About lang={lang} />
+          <Systems lang={lang} />
+          <Work lang={lang} />
+          <Contact lang={lang} />
         </main>
-        <Footer />
+        <Footer lang={lang} />
       </div>
     </div>
   );
