@@ -1,10 +1,15 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { projects } from "./data/projects";
+import { motion, AnimatePresence } from "framer-motion";
+import { projects, type Project } from "./data/projects";
 import { siteConfig } from "./siteConfig";
+import { hasProjectDetail, loadProjectDetail, loadHonorDetail } from "./data/details";
+import { posts, findPost } from "./blog/posts";
 import { VectorField } from "./components/VectorField";
 import { BilibiliEmbed } from "./components/BilibiliEmbed";
-import { Reveal, item, stagger } from "./components/Reveal";
+import { Reveal } from "./components/Reveal";
+import { SectionHeader } from "./components/SectionHeader";
+import { Sidebar } from "./components/Sidebar";
+import { useRoute, type Route } from "./router/useRoute";
 import profilePhoto from "../assets/photo.png";
 
 type Lang = "zh" | "en";
@@ -12,164 +17,94 @@ type Theme = "day" | "night";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
+/* ─── i18n copy ────────────────────────────────────────────────── */
+
 const copy = {
   zh: {
-    nav: { about: "关于", systems: "技能", work: "作品", contact: "联系" },
-    eyebrow: "游戏策划 · 个人网站",
-    role: siteConfig.roleLine,
-    target: siteConfig.target,
-    heroTitle: "用关卡和系统，把想表达的东西做成玩家愿意玩下去的样子。",
-    heroBody:
-      "我是庄舒晴，正在找游戏策划相关的机会。本科在华南理工大学，研究生在清华大学深圳国际研究生院。做过 VR 叙事、2D 冒险、互动装置、赛题案和 Game Jam——平时琢磨最多的是：玩家这一步为什么要继续玩下去。",
-    ctaWork: "看作品",
-    ctaVideo: "部分条目含 B 站演示",
-    heroCardCaption: "游戏策划",
-    aboutTitle: "关于我",
-    aboutNote: "教育背景与近期方向",
-    education: "教育背景",
-    focusTitle: "最近在做什么",
-    focusBody:
-      "写策划案、拆关卡节奏、和程序美术对齐需求，也会用 Unity / VR 做小验证。兴趣偏叙事和系统叠在一起的项目，商业赛题和校园项目都做过一些。",
-    systemsTitle: "技能与工具",
-    systemsNote: "不堆概念，只列实际协作里常用的",
-    workTitle: "作品",
-    workNote: "每个项目一段说明，含个人参与点；有演示视频就放在同一条目里。",
-    workLead: "下面按时间线大致倒序，点开即可看文字与视频（如有）。",
-    contactTitle: "联系",
-    contactNote: "邮件或 B 站私信都可以",
-    contactText: "招聘、实习、合作或单纯想聊聊项目，都欢迎发邮件，说明来意即可。",
-    videoLabel: "演示视频",
-    openVideo: "在 bilibili 打开 ↗",
-    visitBili: "B 站主页 ↗",
-    themeDay: "日间",
-    themeNight: "夜间",
-    langSwitch: "EN",
-    contribution: "我做了什么",
-    outcomes: "结果或数据",
-    concept: "想表达什么",
-    location: "广州 / 深圳",
-    available: "接受策划岗位沟通",
-    undergradLabel: "本科",
-    gradLabel: "研究生",
+    sections: {
+      direction: { id: "00", title: "个人方向", note: "我做什么、怎么思考。" },
+      education: { id: "01", title: "学历", note: "我从哪里来。" },
+      work: { id: "02", title: "项目", note: "做过的、能拿出来讲的几件事。" },
+      honors: { id: "03", title: "荣誉", note: "比赛、奖项与一些反馈。" },
+      blogIndex: { id: "B0", title: "博客", note: "做项目时落下来的一些想法。" },
+    },
+    hero: {
+      callsign: "ZSQ-26 · GAME DESIGN",
+      role: "游戏策划 / 互动叙事 / VR",
+      ctaWork: "看项目",
+      ctaBlog: "读博客",
+      hint: "部分项目附 B 站演示。",
+      idLabel: "ID-01",
+    },
+    cardLabels: { concept: "想做的", contribution: "我做了", outcomes: "结果" },
+    workVideo: { label: "演示视频", open: "在 bilibili 打开 ↗" },
+    detail: "查看详情 →",
+    backHome: "← 回到主页",
+    backWork: "← 回到项目",
+    backHonors: "← 回到荣誉",
+    backBlog: "← 返回博客",
+    minutes: (n: number) => `${n} 分钟阅读`,
+    readMore: "阅读 →",
+    blogEmpty: "还没有发布博客文章。",
+    blogNote: "博客由 Markdown 文件构建，每次合并到主分支会通过 GitHub Action 自动发布。",
+    notFound: "找不到这条记录。",
+    footer: { tagline: "Designed for play. Built with intent." },
   },
   en: {
-    nav: { about: "About", systems: "Skills", work: "Work", contact: "Contact" },
-    eyebrow: "Game design portfolio",
-    role: siteConfig.roleLineEn,
-    target: siteConfig.targetEn,
-    heroTitle: "Design levels and systems so the idea stays fun to play, not just fun to describe.",
-    heroBody:
-      "I’m Shuqing Zhuang, looking for game design opportunities. I studied at South China University of Technology and I’m a graduate student at Tsinghua SIGS. I’ve worked on VR narrative, 2D adventure, an interactive piece, competition pitches, and game jams. Most of my energy goes into one question: why would a player take the next step.",
-    ctaWork: "See projects",
-    ctaVideo: "Some entries include a demo",
-    heroCardCaption: "Game design",
-    aboutTitle: "About",
-    aboutNote: "Background and what I care about",
-    education: "Education",
-    focusTitle: "What I’m up to",
-    focusBody:
-      "Design docs, pacing, alignment with art and code, and small Unity or VR tests when I need to check feel. I like projects where story and systems reinforce each other.",
-    systemsTitle: "Skills and tools",
-    systemsNote: "Practical, day-to-day collaboration",
-    workTitle: "Work",
-    workNote: "Narrative for each project and my part in it, plus video when available.",
-    workLead: "Roughly most recent first. Each card is self contained.",
-    contactTitle: "Contact",
-    contactNote: "Email or Bilibili",
-    contactText: "Hiring, internships, collaboration, or a quick chat about a project are all welcome. A short note about context helps.",
-    videoLabel: "Video",
-    openVideo: "Open on bilibili ↗",
-    visitBili: "Bilibili profile ↗",
-    themeDay: "Light",
-    themeNight: "Dark",
-    langSwitch: "中文",
-    contribution: "What I did",
-    outcomes: "Outcomes",
-    concept: "What it’s about",
-    location: "Guangzhou / Shenzhen",
-    available: "Open to design roles",
-    undergradLabel: "Undergraduate",
-    gradLabel: "Graduate",
+    sections: {
+      direction: { id: "00", title: "Direction", note: "What I make, and how I think about it." },
+      education: { id: "01", title: "Education", note: "Where I come from." },
+      work: { id: "02", title: "Work", note: "A handful of projects worth talking about." },
+      honors: { id: "03", title: "Honors", note: "Awards, prizes, and a bit of reception." },
+      blogIndex: { id: "B0", title: "Blog", note: "Notes left behind from making things." },
+    },
+    hero: {
+      callsign: "ZSQ-26 · GAME DESIGN",
+      role: "Game Design / Interactive Narrative / VR",
+      ctaWork: "See work",
+      ctaBlog: "Read blog",
+      hint: "Some entries include a Bilibili demo.",
+      idLabel: "ID-01",
+    },
+    cardLabels: { concept: "What it's about", contribution: "What I did", outcomes: "Outcome" },
+    workVideo: { label: "Demo video", open: "Open on bilibili ↗" },
+    detail: "Read full →",
+    backHome: "← Back home",
+    backWork: "← Back to work",
+    backHonors: "← Back to honors",
+    backBlog: "← Back to blog",
+    minutes: (n: number) => `${n} min read`,
+    readMore: "Read →",
+    blogEmpty: "No posts published yet.",
+    blogNote: "Posts are authored in Markdown and re-deployed automatically by GitHub Actions on every push.",
+    notFound: "Entry not found.",
+    footer: { tagline: "Designed for play. Built with intent." },
   },
 } as const;
 
-const focusAreas = {
-  zh: ["关卡与系统", "叙事与体验", "Unity / VR 原型", "策划文档与沟通"],
-  en: ["Level & systems", "Narrative & feel", "Unity / VR prototypes", "Docs & collaboration"],
-} as const;
-
-const systems = {
-  zh: [
-    { id: "s1", title: "把想法拆成可玩结构", text: "从主题到目标、压力、节奏，尽量一句话能说清“玩家在这一段要干嘛”。" },
-    { id: "s2", title: "信息怎么给", text: "线索、剧情、教学关什么时候出现，试着避免一次性倒设定。" },
-    { id: "s3", title: "和组里对齐", text: "用流程图、界面草图、里程碑把需求说具体，减少口头往返。" },
-    { id: "s4", title: "用原型试一遍", text: "复杂手感或节奏问题，会倾向先做小场景或 Game Jam 式验证。" },
-  ],
-  en: [
-    { id: "s1", title: "Structure the idea", text: "From theme to goals, pressure, and pacing, keep the player beat readable." },
-    { id: "s2", title: "Pacing what players learn", text: "Clues, story beats, and tutorials staged so it does not feel like a lore dump." },
-    { id: "s3", title: "Alignment", text: "Flowcharts, rough UI, and milestones so requests stay concrete for art and code." },
-    { id: "s4", title: "Prototypes", text: "For tricky feel or cadence, small scenes or a jam build first." },
-  ],
-} as const;
+/* ─── helpers ──────────────────────────────────────────────────── */
 
 function useStoredState<T extends string>(key: string, initial: T) {
   const [value, setValue] = useState<T>(() => {
     if (typeof window === "undefined") return initial;
     return (window.localStorage.getItem(key) as T | null) ?? initial;
   });
-
   useEffect(() => {
     window.localStorage.setItem(key, value);
   }, [key, value]);
-
   return [value, setValue] as const;
 }
 
-function Nav({ lang, theme, onLang, onTheme }: { lang: Lang; theme: Theme; onLang: () => void; onTheme: () => void }) {
-  const [scrolled, setScrolled] = useState(false);
-  const t = copy[lang];
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const go = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  return (
-    <motion.header className={`nav ${scrolled ? "nav--scrolled" : ""}`} initial={{ y: -16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6, ease }}>
-      <button type="button" className="nav__brand" onClick={() => go("top")}>
-        <span className="nav__name">{siteConfig.nameZh}</span>
-        <span className="nav__name-en">{siteConfig.nameEn}</span>
-      </button>
-      <nav className={`nav__links ${lang === "en" ? "nav__links--caps" : ""}`} aria-label="section navigation">
-        {[
-          [t.nav.about, "about"],
-          [t.nav.systems, "systems"],
-          [t.nav.work, "work"],
-          [t.nav.contact, "contact"],
-        ].map(([label, id]) => (
-          <button key={id} type="button" className="nav__link" onClick={() => go(id)}>
-            {label}
-          </button>
-        ))}
-      </nav>
-      <div className="nav__controls" aria-label="display controls">
-        <button type="button" className="nav__toggle" onClick={onTheme}>
-          {theme === "day" ? t.themeNight : t.themeDay}
-        </button>
-        <button type="button" className="nav__toggle" onClick={onLang}>
-          {t.langSwitch}
-        </button>
-      </div>
-    </motion.header>
-  );
+function formatDate(iso: string, lang: Lang) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.valueOf())) return iso;
+  if (lang === "zh") {
+    return `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`;
+  }
+  return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
+
+/* ─── Hero (only on Home) ──────────────────────────────────────── */
 
 function Hero({ lang }: { lang: Lang }) {
   const t = copy[lang];
@@ -177,113 +112,116 @@ function Hero({ lang }: { lang: Lang }) {
   return (
     <section className="hero" id="top">
       <div className="hero__copy">
-        <motion.p className="hero__eyebrow" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease, delay: 0.1 }}>
-          {t.eyebrow}
-        </motion.p>
-        <motion.h1 className="hero__title" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease, delay: 0.15 }}>
-          {t.heroTitle}
-        </motion.h1>
-        <motion.p className="hero__role" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.35 }}>
-          {t.role}
-        </motion.p>
-        <motion.div className="hero__rule" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 0.9, ease, delay: 0.45 }} style={{ transformOrigin: "left center" }} role="presentation" />
-        <motion.p className="hero__bio" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.65, ease, delay: 0.5 }}>
-          {t.heroBody}
-        </motion.p>
-        <motion.div className="hero__chips" variants={stagger} initial="hidden" animate="show">
-          {focusAreas[lang].map((label) => (
-            <motion.span key={label} className="chip" variants={item}>
-              {label}
-            </motion.span>
-          ))}
+        <motion.div
+          className="hero__plate"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease, delay: 0.05 }}
+        >
+          <span className="hero__plate-dot" />
+          <span>{t.hero.callsign}</span>
         </motion.div>
-        <motion.div className="hero__cta" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.85 }}>
-          <button type="button" className="btn btn--primary" onClick={() => document.getElementById("work")?.scrollIntoView({ behavior: "smooth" })}>
-            {t.ctaWork}
+        <motion.h1
+          className="hero__title"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease, delay: 0.1 }}
+        >
+          {siteConfig.oneLiner[lang]}
+        </motion.h1>
+        <motion.p
+          className="hero__role"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
+        >
+          {t.hero.role}
+        </motion.p>
+        <motion.div
+          className="hero__rule"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7, ease, delay: 0.4 }}
+        >
+          <motion.span
+            className="hero__rule-line"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 0.9, ease, delay: 0.45 }}
+            style={{ transformOrigin: "left center" }}
+          />
+          <span className="hero__rule-tick">{siteConfig.location[lang]}</span>
+        </motion.div>
+        <motion.p
+          className="hero__bio"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, ease, delay: 0.5 }}
+        >
+          {siteConfig.intro[lang]}
+        </motion.p>
+        <motion.div
+          className="hero__cta"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
+        >
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => document.getElementById("work")?.scrollIntoView({ behavior: "smooth" })}
+          >
+            {t.hero.ctaWork}
           </button>
-          <span className="hero__hint">{t.ctaVideo}</span>
+          <a className="btn btn--ghost" href="#/blog" onClick={(e) => { e.preventDefault(); window.location.hash = "#/blog"; }}>
+            {t.hero.ctaBlog}
+          </a>
+          <span className="hero__hint">{t.hero.hint}</span>
         </motion.div>
       </div>
-        <motion.aside className="hero-card sf-panel" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8, ease, delay: 0.2 }}>
-        <div className="hero-card__geo" aria-hidden />
-        <img className="hero-card__photo" src={profilePhoto} alt={lang === "zh" ? "庄舒晴的照片" : "Portrait of Shuqing Zhuang"} />
+
+      <motion.aside
+        className="hero-card sf-panel"
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.8, ease, delay: 0.2 }}
+      >
+        <div className="hero-card__photo-wrap">
+          <img className="hero-card__photo" src={profilePhoto} alt={lang === "zh" ? "庄舒晴的照片" : "Portrait of Shuqing Zhuang"} />
+          <span className="hero-card__corner hero-card__corner--tl" />
+          <span className="hero-card__corner hero-card__corner--tr" />
+          <span className="hero-card__corner hero-card__corner--bl" />
+          <span className="hero-card__corner hero-card__corner--br" />
+        </div>
         <div className="hero-card__meta">
-          <p className="hero-card__label">{lang === "zh" ? "个人照片" : "Photo"}</p>
-          <h2>{siteConfig.nameZh}</h2>
-          <p className="hero-card__en">{siteConfig.nameEn}</p>
-          <p className="hero-card__line">{t.heroCardCaption}</p>
-          <p className="hero-card__sub">{t.location} · {t.available}</p>
+          <div className="hero-card__id">
+            <span>{t.hero.idLabel}</span>
+            <span className="hero-card__id-num">{siteConfig.callsign}</span>
+          </div>
+          <h2 className="hero-card__name">{siteConfig.nameZh}</h2>
+          <p className="hero-card__name-en">{siteConfig.nameEn}</p>
+          <p className="hero-card__line">{t.hero.role}</p>
         </div>
       </motion.aside>
     </section>
   );
 }
 
-function SectionHeader({ title, note }: { title: string; note?: string }) {
-  return (
-    <Reveal>
-      <div className="section-head">
-        {note ? <p className="section-head__note">{note}</p> : null}
-        <h2>{title}</h2>
-      </div>
-    </Reveal>
-  );
-}
+/* ─── Direction & Education sections ───────────────────────────── */
 
-function About({ lang }: { lang: Lang }) {
-  const t = copy[lang];
-  const undergraduate = lang === "zh" ? siteConfig.education.undergraduate : siteConfig.education.undergraduateEn;
-  const graduate = lang === "zh" ? siteConfig.education.graduate : siteConfig.education.graduateEn;
-
+function Direction({ lang }: { lang: Lang }) {
+  const sec = copy[lang].sections.direction;
   return (
-    <section className="section dossier" id="about">
-      <SectionHeader title={t.aboutTitle} note={t.aboutNote} />
-      <div className="dossier__grid">
-        <Reveal>
-          <div className="dossier-card dossier-card--wide sf-panel">
-            <p className="dossier-card__label">{t.education}</p>
-            <div className="timeline">
-              <div>
-                <span>{t.undergradLabel}</span>
-                <strong>{undergraduate}</strong>
-              </div>
-              <div>
-                <span>{t.gradLabel}</span>
-                <strong>{graduate}</strong>
-              </div>
-            </div>
-          </div>
-        </Reveal>
-        <Reveal delay={0.08}>
-          <div className="dossier-card sf-panel">
-            <p className="dossier-card__label">{t.focusTitle}</p>
-            <p>{t.focusBody}</p>
-          </div>
-        </Reveal>
-        <Reveal delay={0.16}>
-          <div className="dossier-card dossier-card--status sf-panel">
-            <p className="dossier-card__label">{lang === "zh" ? "求职意向" : "Focus"}</p>
-            <strong>{t.target}</strong>
-            <span>{t.location}</span>
-            <span>{t.available}</span>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-}
-
-function Systems({ lang }: { lang: Lang }) {
-  const t = copy[lang];
-  return (
-    <section className="section systems" id="systems">
-      <SectionHeader title={t.systemsTitle} note={t.systemsNote} />
-      <div className="systems__grid">
-        {systems[lang].map((system, index) => (
-          <Reveal key={system.id} delay={index * 0.04}>
-            <article className="system-card sf-panel">
-              <h3>{system.title}</h3>
-              <p>{system.text}</p>
+    <section className="section" id="direction">
+      <SectionHeader id={sec.id} title={sec.title} note={sec.note} />
+      <div className="directions__grid">
+        {siteConfig.directions.map((d, i) => (
+          <Reveal key={d.code} delay={i * 0.05}>
+            <article className="direction sf-panel">
+              <p className="direction__code">{d.code}</p>
+              <h3>{lang === "zh" ? d.title : d.titleEn}</h3>
+              <p className="direction__title-en">{lang === "zh" ? d.titleEn : d.title}</p>
+              <p>{lang === "zh" ? d.body : d.bodyEn}</p>
             </article>
           </Reveal>
         ))}
@@ -292,136 +230,467 @@ function Systems({ lang }: { lang: Lang }) {
   );
 }
 
-function ProjectBlock({ project, index, lang }: { project: (typeof projects)[0]; index: number; lang: Lang }) {
-  const t = copy[lang];
-  const num = String(index + 1).padStart(2, "0");
-  const view = lang === "zh" ? project : project.en;
-
+function Education({ lang }: { lang: Lang }) {
+  const sec = copy[lang].sections.education;
+  const e = siteConfig.education;
   return (
-    <motion.article className="mission sf-panel" id={project.id} layout initial={{ opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-10% 0px" }} transition={{ duration: 0.65, ease, delay: 0.05 }}>
-      <div className="mission__index">#{num}</div>
-      <div className="mission__body">
-        <p className="mission__meta">
-          <span>{project.period}</span>
-          <span className="mission__role">{view.role}</span>
-        </p>
-        <h3>
-          {view.title}
-          {view.titleEn ? <span> / {view.titleEn}</span> : null}
-        </h3>
-        <p className="mission__summary">{view.summary}</p>
-        <div className="mission__panel">
-          <div>
-            <p className="mission__label">{t.concept}</p>
-            <p>{view.concept}</p>
+    <section className="section" id="education">
+      <SectionHeader id={sec.id} title={sec.title} note={sec.note} />
+      <div className="edu">
+        <Reveal>
+          <div className="edu-card sf-panel">
+            <p className="edu-card__period">
+              <span className="edu-card__period-tick" />
+              {e.undergraduatePeriod}
+            </p>
+            <p className="edu-card__role">{lang === "zh" ? "本科" : "Undergraduate"}</p>
+            <h3 className="edu-card__school">{lang === "zh" ? e.undergraduate : e.undergraduateEn}</h3>
+            <p className="edu-card__school-en">{lang === "zh" ? e.undergraduateEn : e.undergraduate}</p>
+            <p className="edu-card__major">{lang === "zh" ? e.undergraduateMajor : e.undergraduateMajorEn}</p>
           </div>
-          <div>
-            <p className="mission__label">{t.contribution}</p>
-            <ul>
-              {view.contribution.map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
+        </Reveal>
+        <Reveal delay={0.08}>
+          <div className="edu-card sf-panel">
+            <p className="edu-card__period">
+              <span className="edu-card__period-tick" />
+              {lang === "zh" ? e.graduatePeriod : e.graduatePeriodEn}
+            </p>
+            <p className="edu-card__role">{lang === "zh" ? "研究生" : "Graduate"}</p>
+            <h3 className="edu-card__school">{lang === "zh" ? e.graduate : e.graduateEn}</h3>
+            <p className="edu-card__school-en">{lang === "zh" ? e.graduateEn : e.graduate}</p>
+            <p className="edu-card__major">{lang === "zh" ? e.graduateMajor : e.graduateMajorEn}</p>
           </div>
-          {view.outcomes ? (
-            <div>
-              <p className="mission__label">{t.outcomes}</p>
-              <ul>
-                {view.outcomes.map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div>
-        {view.highlights ? (
-          <ul className="mission__highlights">
-            {view.highlights.map((line) => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-        ) : null}
-        <div className="mission__tags">
-          {view.tags.map((tag) => (
-            <span key={tag}>{tag}</span>
-          ))}
-        </div>
-        {project.bvid ? (
-          <BilibiliEmbed bvid={project.bvid} title={view.title} startSec={project.videoStartSec} label={t.videoLabel} openLabel={t.openVideo} />
-        ) : null}
+        </Reveal>
       </div>
-    </motion.article>
+    </section>
   );
 }
 
-function Work({ lang }: { lang: Lang }) {
+/* ─── Project list (cards link to /work/<slug>) ────────────────── */
+
+function ProjectCard({ project, index, lang }: { project: Project; index: number; lang: Lang }) {
   const t = copy[lang];
+  const num = String(index + 1).padStart(2, "0");
+  const view = lang === "zh" ? project : project.en;
+  const hasDetail = hasProjectDetail(project.id);
+
+  const open = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.location.hash = `#/work/${project.id}`;
+  };
+
   return (
-    <section className="section work" id="work">
-      <SectionHeader title={t.workTitle} note={t.workNote} />
-      <Reveal>
-        <p className="section__lead">{t.workLead}</p>
-      </Reveal>
-      <div className="mission-list">
+    <motion.a
+      className="mission-card sf-panel"
+      href={`#/work/${project.id}`}
+      onClick={open}
+      layout
+      initial={{ opacity: 0, y: 32 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-10% 0px" }}
+      transition={{ duration: 0.65, ease, delay: 0.05 }}
+    >
+      <div className="mission-card__head">
+        <span className="mission-card__num">#{num}</span>
+        <span className="mission-card__period">{project.period}</span>
+      </div>
+      <h3 className="mission-card__title">
+        {view.title}
+        {view.titleEn ? <span> / {view.titleEn}</span> : null}
+      </h3>
+      <p className="mission-card__role">{view.role}</p>
+      <p className="mission-card__summary">{view.summary}</p>
+      <div className="mission-card__foot">
+        <div className="mission-card__tags">
+          {view.tags.slice(0, 3).map((tag) => (
+            <span key={tag}>{tag}</span>
+          ))}
+        </div>
+        <span className="mission-card__cta">
+          {hasDetail || project.bvid ? t.detail : t.detail}
+        </span>
+      </div>
+    </motion.a>
+  );
+}
+
+function WorkSection({ lang }: { lang: Lang }) {
+  const sec = copy[lang].sections.work;
+  return (
+    <section className="section" id="work">
+      <SectionHeader id={sec.id} title={sec.title} note={sec.note} />
+      <div className="mission-grid">
         {projects.map((project, index) => (
-          <ProjectBlock key={project.id} project={project} index={index} lang={lang} />
+          <ProjectCard key={project.id} project={project} index={index} lang={lang} />
         ))}
       </div>
     </section>
   );
 }
 
-function Contact({ lang }: { lang: Lang }) {
+/* ─── Honors list (rows link to /honors/<slug>) ────────────────── */
+
+function HonorRow({ honor, lang, idx }: { honor: typeof siteConfig.honors[number]; lang: Lang; idx: number }) {
   const t = copy[lang];
+  const open = (e: React.MouseEvent) => {
+    e.preventDefault();
+    window.location.hash = `#/honors/${honor.slug}`;
+  };
+
   return (
-    <section className="section contact-section" id="contact">
-      <SectionHeader title={t.contactTitle} note={t.contactNote} />
-      <Reveal>
-        <div className="contact-panel sf-panel">
-          <p>{t.contactText}</p>
-          <a className="contact-panel__mail" href={`mailto:${siteConfig.email}`}>
-            {siteConfig.email}
-          </a>
-          <a className="contact-panel__link" href={siteConfig.bilibiliSpace} target="_blank" rel="noreferrer noopener">
-            {t.visitBili}
-          </a>
+    <Reveal delay={idx * 0.05}>
+      <a
+        className="honor-row sf-panel"
+        href={`#/honors/${honor.slug}`}
+        onClick={open}
+      >
+        <span className="honor-row__date">{honor.date}</span>
+        <div className="honor-row__main">
+          <h3 className="honor-row__title">{lang === "zh" ? honor.title : honor.titleEn}</h3>
+          <p className="honor-row__title-en">{lang === "zh" ? honor.titleEn : honor.title}</p>
+          {(lang === "zh" ? honor.note : honor.noteEn) ? (
+            <p className="honor-row__note">{lang === "zh" ? honor.note : honor.noteEn}</p>
+          ) : null}
         </div>
-      </Reveal>
+        <span className="honor-row__source">{lang === "zh" ? honor.source : honor.sourceEn}</span>
+        <span className="honor-row__cta">{t.detail}</span>
+      </a>
+    </Reveal>
+  );
+}
+
+function HonorsSection({ lang }: { lang: Lang }) {
+  const sec = copy[lang].sections.honors;
+  return (
+    <section className="section" id="honors">
+      <SectionHeader id={sec.id} title={sec.title} note={sec.note} />
+      <div className="honors">
+        {siteConfig.honors.map((h, i) => (
+          <HonorRow key={h.slug} honor={h} lang={lang} idx={i} />
+        ))}
+      </div>
     </section>
   );
 }
 
+/* ─── Pages ────────────────────────────────────────────────────── */
+
+function HomePage({ lang }: { lang: Lang }) {
+  return (
+    <>
+      <Hero lang={lang} />
+      <Direction lang={lang} />
+      <Education lang={lang} />
+      <WorkSection lang={lang} />
+      <HonorsSection lang={lang} />
+    </>
+  );
+}
+
+function WorkDetailPage({ slug, lang }: { slug: string; lang: Lang }) {
+  const t = copy[lang];
+  const project = projects.find((p) => p.id === slug);
+  if (!project) return <NotFound lang={lang} />;
+  const view = lang === "zh" ? project : project.en;
+  const detail = loadProjectDetail(project.id);
+  const num = String(projects.findIndex((p) => p.id === slug) + 1).padStart(2, "0");
+
+  return (
+    <article className="detail">
+      <a className="detail__back" href="#/" onClick={(e) => { e.preventDefault(); window.location.hash = "#/"; }}>
+        {t.backHome}
+      </a>
+      <header className="detail__header">
+        <p className="detail__meta">
+          <span className="detail__num">#{num}</span>
+          <span>{project.period}</span>
+          <span>{view.role}</span>
+        </p>
+        <h1>
+          {view.title}
+          {view.titleEn ? <span> / {view.titleEn}</span> : null}
+        </h1>
+        <p className="detail__summary">{view.summary}</p>
+        <div className="detail__tags">
+          {view.tags.map((tag) => (
+            <span key={tag}>{tag}</span>
+          ))}
+        </div>
+      </header>
+
+      <div className="detail__panel">
+        <div className="detail__panel-cell">
+          <p className="detail__panel-label">{t.cardLabels.concept}</p>
+          <p>{view.concept}</p>
+        </div>
+        <div className="detail__panel-cell">
+          <p className="detail__panel-label">{t.cardLabels.contribution}</p>
+          <ul>
+            {view.contribution.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+        {view.outcomes ? (
+          <div className="detail__panel-cell">
+            <p className="detail__panel-label">{t.cardLabels.outcomes}</p>
+            <ul>
+              {view.outcomes.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+      </div>
+
+      {project.bvid ? (
+        <BilibiliEmbed
+          bvid={project.bvid}
+          title={view.title}
+          startSec={project.videoStartSec}
+          label={t.workVideo.label}
+          openLabel={t.workVideo.open}
+        />
+      ) : null}
+
+      {detail ? (
+        <section className="detail__body">
+          <div className="prose" dangerouslySetInnerHTML={{ __html: detail.html }} />
+        </section>
+      ) : null}
+    </article>
+  );
+}
+
+function HonorDetailPage({ slug, lang }: { slug: string; lang: Lang }) {
+  const t = copy[lang];
+  const honor = siteConfig.honors.find((h) => h.slug === slug);
+  if (!honor) return <NotFound lang={lang} />;
+  const detail = loadHonorDetail(honor.slug);
+
+  return (
+    <article className="detail">
+      <a className="detail__back" href="#/" onClick={(e) => { e.preventDefault(); window.location.hash = "#/"; }}>
+        {t.backHome}
+      </a>
+      <header className="detail__header">
+        <p className="detail__meta">
+          <span className="detail__num">{honor.date}</span>
+          <span>{lang === "zh" ? honor.source : honor.sourceEn}</span>
+        </p>
+        <h1>{lang === "zh" ? honor.title : honor.titleEn}</h1>
+        <p className="detail__title-en">{lang === "zh" ? honor.titleEn : honor.title}</p>
+        {(lang === "zh" ? honor.note : honor.noteEn) ? (
+          <p className="detail__summary">{lang === "zh" ? honor.note : honor.noteEn}</p>
+        ) : null}
+      </header>
+      {detail ? (
+        <section className="detail__body">
+          <div className="prose" dangerouslySetInnerHTML={{ __html: detail.html }} />
+        </section>
+      ) : null}
+    </article>
+  );
+}
+
+function BlogPage({ lang }: { lang: Lang }) {
+  const sec = copy[lang].sections.blogIndex;
+  const t = copy[lang];
+
+  return (
+    <article className="detail">
+      <a className="detail__back" href="#/" onClick={(e) => { e.preventDefault(); window.location.hash = "#/"; }}>
+        {t.backHome}
+      </a>
+      <SectionHeader id={sec.id} title={sec.title} note={sec.note} />
+      {posts.length === 0 ? (
+        <p className="blog-empty">{t.blogEmpty}</p>
+      ) : (
+        <ul className="blog-list">
+          {posts.map((post, i) => (
+            <motion.li
+              key={post.slug}
+              initial={{ opacity: 0, y: 22 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-10% 0px" }}
+              transition={{ duration: 0.55, ease, delay: i * 0.04 }}
+              className="blog-item sf-panel"
+            >
+              <a className="blog-item__link" href={`#/blog/${post.slug}`}>
+                <span className="blog-item__date">
+                  <span className="blog-item__tick" aria-hidden />
+                  {formatDate(post.date, lang)} · {t.minutes(post.readMinutes)}
+                </span>
+                <h3 className="blog-item__title">{post.title}</h3>
+                <p className="blog-item__summary">{post.summary}</p>
+                <div className="blog-item__foot">
+                  <div className="blog-item__tags">
+                    {post.tags.map((tag) => (
+                      <span key={tag}>{tag}</span>
+                    ))}
+                  </div>
+                  <span className="blog-item__cta">{t.readMore}</span>
+                </div>
+              </a>
+            </motion.li>
+          ))}
+        </ul>
+      )}
+      <p className="blog-note">{t.blogNote}</p>
+    </article>
+  );
+}
+
+function BlogPostPage({ slug, lang }: { slug: string; lang: Lang }) {
+  const t = copy[lang];
+  const post = findPost(slug);
+  if (!post) return <NotFound lang={lang} />;
+
+  return (
+    <article className="detail">
+      <a className="detail__back" href="#/blog" onClick={(e) => { e.preventDefault(); window.location.hash = "#/blog"; }}>
+        {t.backBlog}
+      </a>
+      <header className="detail__header">
+        <p className="detail__meta">
+          <span className="detail__num">{formatDate(post.date, lang)}</span>
+          <span>{t.minutes(post.readMinutes)}</span>
+        </p>
+        <h1>{post.title}</h1>
+        {post.summary ? <p className="detail__summary">{post.summary}</p> : null}
+        <div className="detail__tags">
+          {post.tags.map((tag) => (
+            <span key={tag}>{tag}</span>
+          ))}
+        </div>
+      </header>
+      <section className="detail__body">
+        <div className="prose" dangerouslySetInnerHTML={{ __html: post.html }} />
+      </section>
+    </article>
+  );
+}
+
+function NotFound({ lang }: { lang: Lang }) {
+  const t = copy[lang];
+  return (
+    <article className="detail">
+      <a className="detail__back" href="#/" onClick={(e) => { e.preventDefault(); window.location.hash = "#/"; }}>
+        {t.backHome}
+      </a>
+      <header className="detail__header">
+        <p className="detail__meta"><span className="detail__num">404</span></p>
+        <h1>{t.notFound}</h1>
+      </header>
+    </article>
+  );
+}
+
+/* ─── Footer ───────────────────────────────────────────────────── */
+
 function Footer({ lang }: { lang: Lang }) {
+  const t = copy[lang];
   return (
     <footer className="footer">
-      <p>
-        © {new Date().getFullYear()} {lang === "zh" ? siteConfig.nameZh : siteConfig.nameEn}
-      </p>
+      <div className="footer__row">
+        <span>
+          © {new Date().getFullYear()} {lang === "zh" ? siteConfig.nameZh : siteConfig.nameEn}
+        </span>
+        <span className="footer__sep">/</span>
+        <span>{t.footer.tagline}</span>
+      </div>
     </footer>
   );
 }
 
+/* ─── Theme sweep ──────────────────────────────────────────────── */
+
+function ThemeSweep({ tick }: { tick: number }) {
+  return (
+    <AnimatePresence>
+      <motion.div
+        key={tick}
+        className="theme-sweep"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.55, 0] }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.8, ease }}
+      />
+    </AnimatePresence>
+  );
+}
+
+/* ─── Router-driven main ───────────────────────────────────────── */
+
+function PageContent({ route, lang }: { route: Route; lang: Lang }) {
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={routeKey(route)}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.4, ease }}
+      >
+        {route.name === "home" ? <HomePage lang={lang} /> : null}
+        {route.name === "work-detail" ? <WorkDetailPage slug={route.slug} lang={lang} /> : null}
+        {route.name === "honor-detail" ? <HonorDetailPage slug={route.slug} lang={lang} /> : null}
+        {route.name === "blog" ? <BlogPage lang={lang} /> : null}
+        {route.name === "blog-detail" ? <BlogPostPage slug={route.slug} lang={lang} /> : null}
+        {/* Direct /work or /honors routes also fall back to home (we list on home) */}
+        {route.name === "work" || route.name === "honors" ? <HomePage lang={lang} /> : null}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+function routeKey(r: Route): string {
+  switch (r.name) {
+    case "home":
+    case "work":
+    case "honors":
+    case "blog":
+      return r.name;
+    default:
+      return `${r.name}:${r.slug}`;
+  }
+}
+
+/* ─── Root ─────────────────────────────────────────────────────── */
+
 export default function App() {
   const [lang, setLang] = useStoredState<Lang>("zsq-lang", "zh");
   const [theme, setTheme] = useStoredState<Theme>("zsq-theme", "night");
+  const [sweepTick, setSweepTick] = useState(0);
+  const route = useRoute();
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
   }, [lang, theme]);
 
+  const handleTheme = () => {
+    setTheme(theme === "day" ? "night" : "day");
+    setSweepTick((n) => n + 1);
+  };
+
   return (
     <div className="page">
       <div className="page__bg" />
       <VectorField />
-      <div className="page__content">
-        <Nav lang={lang} theme={theme} onLang={() => setLang(lang === "zh" ? "en" : "zh")} onTheme={() => setTheme(theme === "day" ? "night" : "day")} />
-        <main>
-          <Hero lang={lang} />
-          <About lang={lang} />
-          <Systems lang={lang} />
-          <Work lang={lang} />
-          <Contact lang={lang} />
+      <ThemeSweep tick={sweepTick} />
+
+      <Sidebar
+        route={route}
+        lang={lang}
+        theme={theme}
+        onLang={() => setLang(lang === "zh" ? "en" : "zh")}
+        onTheme={handleTheme}
+      />
+
+      <div className="shell">
+        <main className="shell__main">
+          <PageContent route={route} lang={lang} />
         </main>
         <Footer lang={lang} />
       </div>
