@@ -7,6 +7,11 @@ export type Project = {
   tags: string[];
   summary: string;
   highlights?: string[];
+  /** 有对应 bilibili 稿件时填写，页面内嵌播放器；无则不要设 */
+  bvid?: string;
+  /** 与 B 站稿件「跳转到指定时间」一致，选填 */
+  videoStartSec?: number;
+  /** 非视频类外链；有 bvid 时一般不必再填 B 站链接 */
   links?: { label: string; href: string }[];
 };
 
@@ -25,12 +30,7 @@ export const projects: Project[] = [
       "谜题与剧情绑定：密码、小游戏与主题一致",
       "测试反馈：资料馆彩蛋与代入感突出",
     ],
-    links: [
-      {
-        label: "B 站演示",
-        href: "https://www.bilibili.com/video/BV1ke411C7JK/",
-      },
-    ],
+    bvid: "BV1ke411C7JK",
   },
   {
     id: "lingzhi",
@@ -60,12 +60,8 @@ export const projects: Project[] = [
       "叙事目标：让技术与自然意象共同服务于「放松与共鸣」",
       "展陈与观众行为：从动线到反馈的一体化策划",
     ],
-    links: [
-      {
-        label: "B 站展示",
-        href: "https://www.bilibili.com/video/BV1rm411y7FL?t=22.2",
-      },
-    ],
+    bvid: "BV1rm411y7FL",
+    videoStartSec: 22.2,
   },
   {
     id: "dong-dadong",

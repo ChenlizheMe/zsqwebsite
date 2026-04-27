@@ -1,8 +1,7 @@
 # 庄舒晴 · 个人网站（React + Vite）
 
-- 作品与策划文案：`src/data/projects.ts`
+- 作品与策划文案：`src/data/projects.ts`（有对应 B 站演示稿时在该项目下填写 `bvid`，无则不要加；**不要**为未建档的项目单挂视频）
 - 姓名、学校、邮箱、英文眉题：`src/siteConfig.ts`
-- **bilibili 内嵌列表（BV 号）**：`src/data/bilibiliVideos.ts`（可与空间 [用户主页](https://space.bilibili.com/1996144345) 中的稿件同步增减）
 
 ## 本地运行
 
@@ -30,6 +29,4 @@ npm run dev
 
 ## 内嵌说明
 
-页面使用 bilibili 官方播放器地址：  
-`https://player.bilibili.com/player.html?bvid=…`  
-若个别浏览器拦截 iframe，可引导访客点击「在 bilibili 打开」或前往个人空间。
+视频与项目一一对应，写在 `projects` 里对应条目的 `bvid` / `videoStartSec`。播放器为 bilibili 官方 `player.html`；若 iframe 被拦截，可使用条目内「在 bilibili 打开」。

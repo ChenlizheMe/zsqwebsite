@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { projects } from "./data/projects";
 import { siteConfig } from "./siteConfig";
 import { VectorField } from "./components/VectorField";
-import { BilibiliSection } from "./components/BilibiliSection";
+import { BilibiliEmbed } from "./components/BilibiliEmbed";
 import { Reveal, stagger, item } from "./components/Reveal";
 
 const focusAreas = [
@@ -42,7 +42,6 @@ function Nav() {
       <nav className="nav__links" aria-label="页面内导航">
         {[
           ["关于", "about"],
-          ["视频", "video"],
           ["项目", "work"],
           ["联系", "contact"],
         ].map(([label, id]) => (
@@ -124,8 +123,8 @@ function Hero() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.85 }}
       >
-        <button type="button" className="btn btn--primary" onClick={() => document.getElementById("video")?.scrollIntoView({ behavior: "smooth" })}>
-          看视频作品
+        <button type="button" className="btn btn--primary" onClick={() => document.getElementById("work")?.scrollIntoView({ behavior: "smooth" })}>
+          浏览项目
         </button>
       </motion.div>
     </section>
@@ -236,6 +235,9 @@ function ProjectBlock({
             </span>
           ))}
         </div>
+        {project.bvid ? (
+          <BilibiliEmbed bvid={project.bvid} title={project.title} startSec={project.videoStartSec} />
+        ) : null}
         {project.links ? (
           <div className="work-item__links">
             {project.links.map((l) => (
@@ -255,10 +257,13 @@ function Work() {
     <section className="section section--work" id="work">
       <Reveal>
         <h2 className="section__h">
-          <span className="section__num">02</span>
+          <span className="section__num">01</span>
           作品与项目
         </h2>
-        <p className="section__lead">以下为策划向摘要，详案与视频演示见各条链接及上方内嵌稿件。</p>
+        <p className="section__lead">
+          每条为独立项目；仅当该项目在 bilibili
+          有对应演示稿时，会在条目内内嵌视频，无单独视频区。
+        </p>
       </Reveal>
       <div className="work-list">
         {projects.map((p, i) => (
@@ -274,7 +279,7 @@ function Contact() {
     <section className="section section--contact" id="contact">
       <Reveal>
         <h2 className="section__h">
-          <span className="section__num">03</span>
+          <span className="section__num">02</span>
           联系
         </h2>
         <div className="contact">
@@ -308,7 +313,6 @@ export default function App() {
         <main>
           <Hero />
           <About />
-          <BilibiliSection />
           <Work />
           <Contact />
         </main>
